@@ -1,0 +1,261 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR" id="app-root" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArquiTech - Clientes</title>
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+    // Restaura o tema salvo no localStorage (dark ou light)
+    if (localStorage.getItem('arquitech-theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
+  <style>
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark .custom-scroll::-webkit-scrollbar-thumb { background: #334155; }
+  </style>
+</head>
+<body id="app-body" class="h-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 text-sm">
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- ============================================================
+         SIDEBAR
+         ============================================================ -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0">
+      <div>
+        <!-- Logo + versão -->
+        <div class="p-5 flex items-center justify-between border-b border-slate-800">
+          <a href="{% url 'dashboard' %}" class="flex items-center gap-2 font-bold text-amber-400 text-lg tracking-wider">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            ArquiTech
+          </a>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">v2.4</span>
+        </div>
+
+        <!-- Card do usuário logado (dados da sessão) -->
+        <div class="p-4 mx-3 my-3 bg-slate-800/60 rounded-xl flex items-center gap-3 border border-slate-700/50">
+          <div class="w-10 h-10 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm shrink-0">
+            {{ request.session.usuario_nome|slice:":2"|upper }}
+          </div>
+          <div class="overflow-hidden">
+            <h4 class="font-semibold text-white text-xs truncate">Arq. {{ request.session.usuario_nome }}</h4>
+            <p class="text-[11px] text-amber-400 font-mono">CAU {{ request.session.usuario_cau }}</p>
+          </div>
+        </div>
+
+        <!-- Menu de navegação — "Clientes" destacado em âmbar porque é a tela atual -->
+        <nav class="px-3 space-y-1">
+          <a href="{% url 'dashboard' %}" data-menu="dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            Dashboard
+          </a>
+
+          <!-- Item "Usuários" só visível para admin/master -->
+          {% if is_admin %}
+          <a href="{% url 'lista_usuarios' %}" data-menu="usuarios" class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+              Usuários
+            </div>
+            <span class="bg-amber-500 text-slate-950 px-2 py-0.5 rounded-full text-[10px] font-bold">{{ total_usuarios|default:"0" }}</span>
+          </a>
+          {% endif %}
+
+          <a href="{% url 'lista_projetos' %}" data-menu="projetos" class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              Projetos & Etapas
+            </div>
+          </a>
+
+          <!-- Este é o link ATIVO: bg-amber-500/10 text-amber-400 font-medium -->
+          <a href="{% url 'lista_clientes' %}" data-menu="clientes" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-amber-500/10 text-amber-400 font-medium text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            Clientes
+          </a>
+
+          <a href="{% url 'lista_contratos' %}" data-menu="financeiro" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Contratos & Financeiro
+          </a>
+        </nav>
+      </div>
+
+      <!-- Rodapé da sidebar: Ajustes + Sair -->
+      <div class="p-3 border-t border-slate-800 space-y-2">
+        <button onclick="toggleModal('modal-settings')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Ajustes do Software
+        </button>
+
+        <a href="{% url 'logout' %}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          Sair do Sistema
+        </a>
+      </div>
+    </aside>
+
+    <!-- ============================================================
+         CONTEÚDO PRINCIPAL
+         ============================================================ -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Header: título + botão "Novo Cliente" -->
+      <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between shrink-0">
+        <div>
+          <h1 class="text-base font-bold text-slate-800 dark:text-white">Clientes</h1>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Tabela <span class="font-mono">CLIENTE</span></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{% url 'cadastrar_cliente' %}" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-4 py-2 rounded-lg transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Novo Cliente
+          </a>
+        </div>
+      </header>
+
+      <!-- Barra de busca (id="busca" usada pelo JS no final) -->
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="relative w-96">
+          <input id="busca" type="text" oninput="filtrarClientes()" placeholder="Buscar por nome, CPF ou e-mail..."
+                 class="w-full pl-9 pr-4 py-2 text-xs bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-amber-500 dark:text-white placeholder-slate-400">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+      </div>
+
+      <!-- Tabela de clientes -->
+      <div class="flex-1 overflow-y-auto custom-scroll p-6">
+        {% if messages %}
+          {% for m in messages %}
+            <div class="mb-4 px-4 py-3 rounded-lg text-xs font-semibold {% if m.tags == 'error' %}bg-red-100 text-red-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">{{ m }}</div>
+          {% endfor %}
+        {% endif %}
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <table class="w-full text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider">
+              <tr>
+                <th class="text-left px-4 py-3 font-semibold">ID</th>
+                <th class="text-left px-4 py-3 font-semibold">Nome</th>
+                <th class="text-left px-4 py-3 font-semibold">CPF</th>
+                <th class="text-left px-4 py-3 font-semibold">Telefone</th>
+                <th class="text-left px-4 py-3 font-semibold">E-mail</th>
+                <th class="text-right px-4 py-3 font-semibold">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-clientes" class="divide-y divide-slate-100 dark:divide-slate-700">
+
+              <!-- Loop: cada "c" é uma tupla da view:
+                   c.0=id_cliente, c.1=nome, c.2=cpf, c.3=telefone, c.4=email -->
+              {% for c in clientes %}
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition">
+                <td class="px-4 py-3 font-mono text-slate-400">{{ c.0 }}</td>
+
+                <!-- Nome como link para a tela de detalhe do cliente (navegação cruzada) -->
+                <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">
+                  <a href="{% url 'detalhe_cliente' c.0 %}" class="hover:text-amber-500 transition underline decoration-transparent hover:decoration-amber-500">
+                    {{ c.1 }}
+                  </a>
+                  {% if c.6 == 'I' %}<span class="ml-2 text-[10px] font-semibold px-2 py-0.5 rounded bg-red-100 text-red-700">Inativo</span>{% endif %}
+                </td>
+
+                <td class="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">{{ c.2 }}</td>
+                <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ c.3|default:"—" }}</td>
+                <td class="px-4 py-3 text-slate-600 dark:text-slate-300">{{ c.4|default:"—" }}</td>
+
+                <!-- Ações: Editar | Excluir (sem contrato) / Inativar (com contrato) / Reativar (inativo) -->
+                <td class="px-4 py-3 text-right whitespace-nowrap">
+                  <a href="{% url 'editar_cliente' c.0 %}" class="text-amber-600 dark:text-amber-400 hover:underline font-medium">Editar</a>
+                  <span class="text-slate-300 dark:text-slate-600 mx-2">|</span>
+                  {% if c.6 == 'I' %}
+                  <form method="POST" action="{% url 'reativar_cliente' c.0 %}" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-emerald-600 hover:underline font-medium">Reativar</button>
+                  </form>
+                  {% elif c.7 > 0 %}
+                  <form method="POST" action="{% url 'deletar_cliente' c.0 %}" class="inline"
+                        onsubmit="return confirm('{{ c.1 }} possui {{ c.7 }} contrato(s)/projeto(s). Ele será INATIVADO, não excluído. Continuar?')">
+                    {% csrf_token %}
+                    <button type="submit" class="text-slate-600 dark:text-slate-300 hover:underline font-medium">Inativar</button>
+                  </form>
+                  {% else %}
+                  <form method="POST" action="{% url 'deletar_cliente' c.0 %}" class="inline"
+                        onsubmit="return confirm('Excluir {{ c.1 }}? Ele não tem contratos nem projetos e será removido.')">
+                    {% csrf_token %}
+                    <button type="submit" class="text-red-500 hover:underline font-medium">Excluir</button>
+                  </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <!-- Fallback se a lista estiver vazia -->
+              <tr>
+                <td colspan="6" class="text-center py-8 text-slate-400">Nenhum cliente cadastrado.</td>
+              </tr>
+              {% endfor %}
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE CONFIGURAÇÕES
+       ============================================================ -->
+  <div id="modal-settings" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-800 w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+        <h3 class="font-bold text-slate-800 dark:text-white">Configurações</h3>
+        <button onclick="toggleModal('modal-settings')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
+      </div>
+      <div class="p-6 space-y-5">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-500 dark:text-slate-400 mb-2">Tema da Interface</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button onclick="setTheme('light')" class="flex items-center justify-center gap-2 py-2 px-3 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">☀️ Claro</button>
+            <button onclick="setTheme('dark')" class="flex items-center justify-center gap-2 py-2 px-3 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">🌙 Escuro</button>
+          </div>
+        </div>
+      </div>
+      <div class="px-6 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-700 text-right">
+        <button onclick="toggleModal('modal-settings')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-4 py-2 rounded-lg transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <script>
+    // Filtro de busca em tempo real
+    function filtrarClientes() {
+      const termo = document.getElementById('busca').value.toLowerCase();
+      const linhas = document.querySelectorAll('#tabela-clientes tr');
+      linhas.forEach(linha => {
+        const texto = linha.innerText.toLowerCase();
+        if (texto.includes(termo) || termo === '') { linha.style.display = ''; }
+        else { linha.style.display = 'none'; }
+      });
+    }
+
+    // Abre/fecha modal pelo ID
+    function toggleModal(id) { const m = document.getElementById(id); if (!m) return; m.classList.toggle('hidden'); m.classList.toggle('flex'); }
+
+    // Alterna dark/light salvando no localStorage
+    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('arquitech-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
+
+    // Aplica tema específico
+    function setTheme(theme) { const html = document.documentElement; if (theme === 'dark') html.classList.add('dark'); else html.classList.remove('dark'); localStorage.setItem('arquitech-theme', theme); }
+  </script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR" id="app-root" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArquiTech - {% if cliente %}Editar{% else %}Novo{% endif %} Cliente</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+    // Restaura o tema salvo no localStorage
+    if (localStorage.getItem('arquitech-theme') === 'dark') { document.documentElement.classList.add('dark'); }
+  </script>
+  <style>
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark .custom-scroll::-webkit-scrollbar-thumb { background: #334155; }
+  </style>
+</head>
+<body id="app-body" class="h-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100 font-sans transition-colors duration-200 text-sm">
+
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- ============================================================
+         SIDEBAR FIXA (sticky top-0 h-screen)
+         ============================================================ -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between border-r border-slate-800 shrink-0 sticky top-0 h-screen">
+      <div>
+        <div class="p-5 flex items-center justify-between border-b border-slate-800">
+          <a href="{% url 'dashboard' %}" class="flex items-center gap-2 font-bold text-amber-400 text-lg tracking-wider">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            ArquiTech
+          </a>
+          <span class="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-400">v2.4</span>
+        </div>
+
+        <!-- Card do usuário logado -->
+        <div class="p-4 mx-3 my-3 bg-slate-800/60 rounded-xl flex items-center gap-3 border border-slate-700/50">
+          <div class="w-10 h-10 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-sm shrink-0">
+            {{ request.session.usuario_nome|slice:":2"|upper }}
+          </div>
+          <div class="overflow-hidden">
+            <h4 class="font-semibold text-white text-xs truncate">Arq. {{ request.session.usuario_nome }}</h4>
+            <p class="text-[11px] text-amber-400 font-mono">CAU {{ request.session.usuario_cau }}</p>
+          </div>
+        </div>
+
+        <!-- Menu de navegação -->
+        <nav class="px-3 space-y-1">
+          <a href="{% url 'dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            Dashboard
+          </a>
+
+          <!-- Item "Usuários" só para admin -->
+          {% if is_admin %}
+          <a href="{% url 'lista_usuarios' %}" class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+              Usuários
+            </div>
+          </a>
+          {% endif %}
+
+          <a href="{% url 'lista_projetos' %}" class="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <div class="flex items-center gap-3">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              Projetos & Etapas
+            </div>
+          </a>
+
+          <a href="{% url 'lista_clientes' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-amber-500/10 text-amber-400 transition text-xs font-semibold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            Clientes
+          </a>
+
+          <a href="{% url 'lista_contratos' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Contratos & Financeiro
+          </a>
+        </nav>
+      </div>
+
+      <!-- Rodapé da sidebar -->
+      <div class="p-3 border-t border-slate-800 space-y-2">
+        <button onclick="toggleModal('modal-settings')" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Ajustes do Software
+        </button>
+        <a href="{% url 'logout' %}" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white transition text-xs">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          Sair do Sistema
+        </a>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Header com botão voltar + título dinâmico (Editar x Novo) -->
+      <header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+          <a href="{% url 'lista_clientes' %}" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+          </a>
+          <div>
+            <h1 class="text-base font-bold text-slate-800 dark:text-white">{% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %}</h1>
+            <p class="text-[11px] text-slate-500">Tabela <span class="font-mono">CLIENTE</span></p>
+          </div>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-y-auto custom-scroll p-6">
+        <!-- action muda conforme o modo: editar x cadastrar -->
+        <form method="POST"
+              action="{% if cliente %}{% url 'editar_cliente' cliente.0 %}{% else %}{% url 'cadastrar_cliente' %}{% endif %}"
+              class="max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+
+          {% csrf_token %}
+
+          {% if erro %}
+            <div class="bg-red-100 text-red-700 text-xs font-semibold p-3 rounded-lg">{{ erro }}</div>
+          {% endif %}
+
+          <h2 class="text-sm font-bold text-slate-800 dark:text-white">Dados Pessoais</h2>
+
+          <div>
+            <label for="nome" class="block text-xs font-semibold uppercase mb-1">Nome Completo *</label>
+            <input id="nome" name="nome" type="text" required placeholder="Ex: Carlos Oliveira"
+                   value="{{ cliente.1|default:'' }}" class="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="cpf" class="block text-xs font-semibold uppercase mb-1">CPF *</label>
+              <input id="cpf" name="cpf" type="text" maxlength="11" required placeholder="Somente números"
+                     value="{{ cliente.2|default:'' }}" class="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+            </div>
+            <div>
+              <label for="telefone" class="block text-xs font-semibold uppercase mb-1">Telefone</label>
+              <input id="telefone" name="telefone" type="tel" placeholder="(00) 00000-0000"
+                     value="{{ cliente.3|default:'' }}" class="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+            </div>
+          </div>
+
+          <div>
+            <label for="email" class="block text-xs font-semibold uppercase mb-1">E-mail</label>
+            <input id="email" name="email" type="email" placeholder="cliente@email.com"
+                   value="{{ cliente.4|default:'' }}" class="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+          </div>
+
+          <div>
+            <label for="endereco" class="block text-xs font-semibold uppercase mb-1">Endereço</label>
+            <input id="endereco" name="endereco" type="text" placeholder="Rua, número, cidade/UF"
+                   value="{{ cliente.5|default:'' }}" class="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+          </div>
+
+          <div>
+            <label for="observacao" class="block text-xs font-semibold uppercase mb-1">Observação</label>
+            <textarea id="observacao" name="observacao" rows="3" placeholder="Informações adicionais (opcional)"
+                      class="w-full px-3 py-2 text-sm border rounded-lg dark:bg-slate-900 dark:border-slate-600 dark:text-white resize-none">{{ cliente.6|default:'' }}</textarea>
+          </div>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <a href="{% url 'lista_clientes' %}" class="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300">Cancelar</a>
+            <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-semibold text-xs px-5 py-2 rounded-lg">
+              {% if cliente %}Atualizar{% else %}Salvar{% endif %} Cliente
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function toggleModal(id) { const m = document.getElementById(id); if (!m) return; m.classList.toggle('hidden'); m.classList.toggle('flex'); }
+    function setTheme(theme) { const html = document.documentElement; if (theme === 'dark') html.classList.add('dark'); else html.classList.remove('dark'); localStorage.setItem('arquitech-theme', theme); }
+    function toggleDarkMode() { document.documentElement.classList.toggle('dark'); localStorage.setItem('arquitech-theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); }
+  </script>
+</body>
+</html>
